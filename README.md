@@ -3,92 +3,63 @@
 <p align="center">
   <img src="assets/dev_clean_color.png" width="140" alt="Dev Cleaner logo" />
 </p>
+<p align="center" style="font-size: 12px; letter-spacing: 0.3em; text-transform: uppercase; color: #94a3b8;">
+  Dev Cleaner Desktop
+</p>
+<p align="center" style="font-size: 28px; font-weight: 700; margin-top: 6px;">
+  Workspace Health Dashboard
+</p>
+<p align="center" style="font-size: 14px; color: #cbd5f5; max-width: 720px; margin: 8px auto 0;">
+  Scan, visualize, and safely clean heavyweight artifacts across your developer workspaces — with system telemetry and a configurable menu bar widget.
+</p>
 
-Dev Cleaner is a desktop app for keeping developer workspaces lean. It scans selected roots, surfaces heavy artifacts (like `node_modules`, build outputs, caches), and helps you clean them safely with clear previews, system telemetry, and a configurable menu bar widget.
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">🧹<br/><strong>Scan</strong><br/><span>Multi‑root cleanup</span></td>
+      <td align="center">📊<br/><strong>System</strong><br/><span>Telemetry & health</span></td>
+      <td align="center">🧭<br/><strong>Menu Bar</strong><br/><span>Configurable widget</span></td>
+      <td align="center">🧰<br/><strong>Mac Tools</strong><br/><span>Junk, large files, memory relief</span></td>
+    </tr>
+  </table>
+</div>
 
 ## Table of Contents
 
-- Features
-- Screens & Workflows
-- Menu Bar Widget
-- Scheduled Scans
-- Data & Safety
-- Tech Stack
-- Project Structure
-- Development
-- Build & Packaging
-- Troubleshooting
-- License
+- ✨ Features
+- 🧭 Screens & Workflows
+- 🧩 Menu Bar Widget
+- ⏱️ Scheduled Scans
+- 🔒 Data & Safety
+- 🛠️ Tech Stack
+- 🗂️ Project Structure
+- 🧪 Development
+- 📦 Build & Packaging
+- 🧯 Troubleshooting
+- 📄 License
 
-## Features
+## ✨ Features
 
-- **Workspace scanning**
-  - Multi‑root scanning for developer junk folders
-  - Smart grouping by scan root with per‑project totals
-  - Quick “clean selected” and “clean all” actions
-- **Cleanup previews**
-  - See size, path, and folder counts before deleting
-  - Confirm dialog for destructive actions
-  - Cleanup totals persisted locally
-- **System telemetry**
-  - CPU load and load averages
-  - Memory usage, swap usage, pageouts
-  - Disk usage and read/write throughput
-  - Network inbound/outbound throughput and totals
-  - Battery health, cycles, power status (macOS)
-  - Wi‑Fi details, Bluetooth devices, open ports (where available)
-- **Menu bar widget**
-  - Compact system snapshot in the macOS menu bar
-  - Toggle per‑section visibility (Disk/Memory/CPU/Battery/Latest Scan/Warning)
-  - 3 GB junk warning when scan results exceed threshold
-- **Scheduled scans**
-  - Configurable scan interval in Settings
-  - Runs in the background while the app is open
-- **Mac maintenance tools**
-  - System junk scan and clean
-  - Large file scan + delete
-  - Memory relief (terminate heavy processes owned by user)
-  - Startup items list (read‑only)
-- **Applications management (macOS)**
-  - List installed apps
-  - Reveal in Finder
-  - Uninstall (move to Trash)
-- **Developer tools inventory**
-  - Installed tooling list (Python, Node, Docker, Git, etc.)
-- **Preferences**
-  - Target selection by ecosystem
-  - Ignore list
-  - Menu bar configuration
-  - Scheduled scans
+- 🧹 **Workspace scanning**: Multi‑root scans for developer junk folders, grouped by root with per‑project totals and quick clean actions.
+- 🧪 **Cleanup previews**: See sizes, paths, and folder counts before deleting; confirmation included and totals are persisted locally.
+- 📊 **System telemetry**: CPU load, memory/swap/pageouts, disk I/O, network throughput, battery health, Wi‑Fi, Bluetooth, and open ports (where available).
+- 🧭 **Menu bar widget**: Compact system snapshot with per‑section visibility toggles and a 3 GB junk warning.
+- ⏱️ **Scheduled scans**: Configurable interval in Settings; runs while the app is open.
+- 🧰 **Mac maintenance tools**: System junk scan, large file scan/delete, memory relief, and startup items list.
+- 📦 **Applications (macOS)**: List installed apps, reveal in Finder, and uninstall (move to Trash).
+- 🧩 **Developer tools inventory**: Detect installed tooling (Python, Node, Docker, Git, etc.).
+- ⚙️ **Preferences**: Target selection by ecosystem, ignore list, menu bar configuration, and scheduled scans.
 
-## Screens & Workflows
+## 🧭 Screens & Workflows
 
-- **Dashboard**
-  - Workspace health summary
-  - Quick actions (Pick Folders, Start Scan)
-  - Scan results preview
-- **Scan Results**
-  - Project list with sortable size/name
-  - Root grouping with subtotals
-  - Selective cleanup with confirmation
-- **System**
-  - Telemetry cards and detailed sections
-  - Network interfaces and Wi‑Fi details
-  - Battery health and power saving controls
-- **Mac Cleaner**
-  - Junk categories with size/file count
-  - Large files scan and bulk delete
-  - Memory relief for heavy processes
-  - Startup items overview
-- **Applications**
-  - Installed apps list with icons and metadata
-  - Reveal or uninstall
-- **Settings**
-  - Scan defaults, ignore list, and scan schedule
-  - Menu bar widget visibility and sections
-  - Cleanup totals and reset
+- **Dashboard**: Workspace health summary, quick actions (Pick Folders, Start Scan), and a scan results preview.
+- **Scan Results**: Sortable project list, root grouping with subtotals, and selective cleanup with confirmation.
+- **System**: Telemetry cards, network interfaces, Wi‑Fi details, and battery health/power saving controls.
+- **Mac Cleaner**: Junk categories with size/file count, large file scan/delete, memory relief, and startup items.
+- **Applications**: Installed apps list with icons/metadata plus reveal/uninstall actions.
+- **Settings**: Scan defaults, ignore list, scan schedule, menu bar visibility, and cleanup totals.
 
-## Menu Bar Widget
+## 🧭 Menu Bar Widget
 
 Configure which sections appear in **Settings → Menu Bar**:
 
@@ -101,18 +72,18 @@ Configure which sections appear in **Settings → Menu Bar**:
 
 You can also toggle the entire widget visibility from the same section.
 
-## Scheduled Scans
+## ⏱️ Scheduled Scans
 
 Scheduled scans run in the background while the app is open (including when the main window is hidden). Configure in **Settings → Scheduled Scans**.
 
-## Data & Safety
+## 🔒 Data & Safety
 
 - All scan configuration and totals are stored locally.
 - Cleanup uses a preview + confirmation step.
 - Deletions can be configured to move to Trash (where supported).
 - Only current‑user processes can be terminated in Memory Relief.
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 - **Electron** (main/renderer)
 - **React 18** + **TypeScript**
@@ -121,7 +92,12 @@ Scheduled scans run in the background while the app is open (including when the 
 - **Tailwind CSS**
 - **Electron Builder** (packaging)
 
-## Project Structure
+## ⬇️ Downloads
+
+- macOS (Apple Silicon): `https://github.com/Tolsion/DevCleaner/releases/download/v0.1.5/Dev.Cleaner-0.1.5-arm64-apple-silicon.dmg`
+- Windows (x64): `https://github.com/Tolsion/DevCleaner/releases/download/v0.1.5/Dev.Cleaner.0.1.5-win.exe`
+
+## 🗂️ Project Structure
 
 - `electron/main` – main process services, IPC handlers, scheduler
 - `electron/preload` – secure API bridge
@@ -131,14 +107,14 @@ Scheduled scans run in the background while the app is open (including when the 
 - `src/store` – Zustand stores
 - `assets` – app icons and artwork
 
-## Development
+## 🧪 Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Build & Packaging
+## 📦 Build & Packaging
 
 ```bash
 # macOS (arm64)
@@ -148,7 +124,7 @@ npm run dist:mac
 npm run dist:win
 ```
 
-## Troubleshooting
+## 🧯 Troubleshooting
 
 - **Dock icon doesn’t appear in DMG**  
   Ensure `assets/dev_clean_color.icns` is valid and rebuild the DMG.
@@ -156,6 +132,6 @@ npm run dist:win
 - **Menu bar widget doesn’t update**  
   Check Settings → Menu Bar and ensure the widget is enabled.
 
-## License
+## 📄 License
 
 Private. All rights reserved.
