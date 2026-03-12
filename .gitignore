@@ -1,0 +1,70 @@
+# Dependencies
+
+node_modules/
+jspm_packages/
+
+# Build output
+
+dist/
+build/
+release/
+out/
+.next
+.next-cache
+
+# Electron builder
+
+dist_electron/
+electron-builder.yml
+*.blockmap
+
+# Packaged apps
+
+*.dmg
+*.exe
+*.AppImage
+*.snap
+*.deb
+*.rpm
+*.msi
+
+# Logs
+
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+
+.env
+.env.local
+.env.development
+.env.production
+
+# macOS
+
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+
+*~
+
+# IDE
+
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage

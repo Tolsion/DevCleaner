@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --titlebar-height: 36px;
+  --header-height: 80px;
+}
+
+body {
+  margin: 0;
+}
+
+input[type="checkbox"] {
+  accent-color: #38bdf8;
+  color-scheme: dark;
+}
+
+input[type="checkbox"]:not(:checked) {
+  background-color: rgba(15, 23, 42, 0.8);
+}
+
+.app-titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--titlebar-height);
+  background: rgb(6, 11, 28);
+  z-index: 40;
+  -webkit-app-region: drag;
+}
+
+.app-no-drag {
+  -webkit-app-region: no-drag;
+}
