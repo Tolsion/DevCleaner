@@ -94,8 +94,8 @@ Scheduled scans run in the background while the app is open (including when the 
 
 ## ⬇️ Downloads
 
-- macOS (Apple Silicon): `https://github.com/Tolsion/DevCleaner/releases/download/v0.1.5/Dev.Cleaner-0.1.5-arm64-apple-silicon.dmg`
-- Windows (x64): `https://github.com/Tolsion/DevCleaner/releases/download/v0.1.5/Dev.Cleaner.0.1.5-win.exe`
+- macOS (Apple Silicon): [Download DMG](https://github.com/Tolsion/DevCleaner/releases/download/v0.1.5/Dev.Cleaner-0.1.5-arm64-apple-silicon.dmg)
+- Windows (x64): [Download EXE](https://github.com/Tolsion/DevCleaner/releases/download/v0.1.5/Dev.Cleaner.0.1.5-win.exe)
 
 ## 🗂️ Project Structure
 
