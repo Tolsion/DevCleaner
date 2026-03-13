@@ -1,0 +1,41 @@
+{
+  "$schema": "https://wvw.dev/apps.schema.json",
+  "store": {
+    "name": "Dev Cleaner",
+    "developer": "Tolsion",
+    "tagline": "Workspace Health Dashboard",
+    "github": "https://github.com/Tolsion"
+  },
+  "categories": [
+    { "id": "macos", "name": "macOS Apps" },
+    { "id": "utilities", "name": "Utilities" },
+    { "id": "developer-tools", "name": "Developer Tools" },
+    { "id": "productivity", "name": "Productivity" }
+  ],
+  "apps": [
+    {
+      "id": "dev-cleaner",
+      "name": "Dev Cleaner",
+      "subtitle": "Workspace health dashboard",
+      "description": "Scan, visualize, and safely clean heavyweight artifacts across developer workspaces.",
+      "longDescription": "Scan, visualize, and safely clean heavyweight artifacts across your developer workspaces with system telemetry and a configurable menu bar widget.",
+      "icon": "https://raw.githubusercontent.com/Tolsion/DevCleaner/main/assets/dev_clean_color.png",
+      "iconEmoji": "🧹",
+      "iconStyle": { "scale": 1.1, "objectFit": "cover", "borderRadius": "22%" },
+      "category": ["macos", "utilities", "developer-tools", "productivity"],
+      "platform": "macOS",
+      "price": "Free",
+      "github": "https://github.com/Tolsion/DevCleaner",
+      "homepage": null,
+      "language": "TypeScript",
+      "downloadUrl": "https://github.com/Tolsion/DevCleaner/releases/latest",
+      "requirements": "macOS",
+      "features": [
+        "Multi-root workspace scanning",
+        "Cleanup previews with safe delete",
+        "System telemetry and menu bar widget",
+        "Mac maintenance tools (junk, large files, memory relief)"
+      ]
+    }
+  ]
+}
