@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { FolderOpen, Trash2 } from "lucide-react";
 import { useAppsStore } from "../../store/appsStore";
 import LoadingOverlay from "../../components/LoadingOverlay";
+import {
+  detectRendererOsFamily,
+  getFileBrowserName,
+  getPlatformDisplayName,
+  getTrashLabel,
+} from "../../app/platform";
 
 const formatDate = (value: string | null) => {
   if (!value) return "Unknown";
@@ -22,6 +28,10 @@ const ApplicationsPage = () => {
   } = useAppsStore();
   const [query, setQuery] = useState("");
   const [confirmPath, setConfirmPath] = useState<string | null>(null);
+  const platform = detectRendererOsFamily();
+  const fileBrowserName = getFileBrowserName(platform);
+  const platformName = getPlatformDisplayName(platform);
+  const trashLabel = getTrashLabel(platform);
 
   useEffect(() => {
     void fetchApps();
@@ -64,7 +74,7 @@ const ApplicationsPage = () => {
 
       {!supported ? (
         <section className="rounded-2xl border border-slate-800 bg-surface/70 p-6 text-sm text-muted">
-          Application management is currently supported on macOS only.
+          Application listing is not available on {platformName}.
         </section>
       ) : null}
 
@@ -81,7 +91,7 @@ const ApplicationsPage = () => {
           <div className="divide-y divide-slate-800 text-sm">
             {filtered.map((app) => (
               <div
-                key={app.path}
+                key={`${app.path || app.name}-${app.version ?? "unknown"}`}
                 className="flex flex-wrap items-center justify-between gap-3 py-3"
               >
                 <div className="flex items-start gap-3">
@@ -100,7 +110,7 @@ const ApplicationsPage = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-slate-100">{app.name}</p>
-                    <p className="mt-1 text-xs text-muted">{app.path}</p>
+                    <p className="mt-1 text-xs text-muted">{app.path || "Path unavailable"}</p>
                     <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted">
                       <span>Installed: {formatDate(app.installedAt)}</span>
                     </div>
@@ -125,19 +135,26 @@ const ApplicationsPage = () => {
                   <button
                     type="button"
                     onClick={() => void revealApp(app.path)}
+                    disabled={!app.path}
                     className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:bg-slate-900/70"
                   >
                     <FolderOpen size={14} />
-                    Show in Finder
+                    Show in {fileBrowserName}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmPath(app.path)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-100 transition hover:bg-rose-500/20"
-                  >
-                    <Trash2 size={14} />
-                    Uninstall
-                  </button>
+                  {app.uninstallSupported ? (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmPath(app.path)}
+                      className="inline-flex items-center gap-2 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-100 transition hover:bg-rose-500/20"
+                    >
+                      <Trash2 size={14} />
+                      Uninstall
+                    </button>
+                  ) : (
+                    <span className="text-xs text-muted">
+                      {app.uninstallHint ?? `Uninstall inside ${platformName}.`}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -152,11 +169,11 @@ const ApplicationsPage = () => {
               Uninstall App
             </p>
             <h3 className="mt-2 text-xl font-semibold">
-              Move application to Trash?
+              Move application to {trashLabel}?
             </h3>
             <p className="mt-2 text-sm text-muted">
-              The app bundle will be moved to the Trash. You can restore it
-              before emptying Trash.
+              The app files will be moved to {trashLabel}. You can restore them
+              before emptying it.
             </p>
             <p className="mt-3 text-xs text-slate-300">{confirmPath}</p>
             <div className="mt-4 flex justify-end gap-2">
@@ -175,7 +192,7 @@ const ApplicationsPage = () => {
                 }}
                 className="rounded-lg border border-rose-500/40 bg-rose-500/20 px-3 py-2 text-xs font-semibold text-rose-100 transition hover:bg-rose-500/30"
               >
-                Move to Trash
+                Move to {trashLabel}
               </button>
             </div>
           </div>

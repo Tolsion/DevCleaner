@@ -23,12 +23,26 @@ type JunkDefinition = {
   path: string;
 };
 
-const JUNK_DEFINITIONS: JunkDefinition[] = [
-  { id: 'caches', label: 'User Caches', path: '~/Library/Caches' },
-  { id: 'logs', label: 'User Logs', path: '~/Library/Logs' },
-  { id: 'crashReports', label: 'Crash Reports', path: '~/Library/Application Support/CrashReporter' },
-  { id: 'xcodeDerivedData', label: 'Xcode Derived Data', path: '~/Library/Developer/Xcode/DerivedData' }
-];
+const getJunkDefinitions = (): JunkDefinition[] => {
+  if (process.platform === 'win32') {
+    const localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
+    const windowsDir = process.env.WINDIR || 'C:\\Windows';
+    return [
+      { id: 'caches', label: 'Browser Cache', path: path.join(localAppData, 'Microsoft', 'Windows', 'INetCache') },
+      { id: 'temp', label: 'User Temp Files', path: path.join(localAppData, 'Temp') },
+      { id: 'crashReports', label: 'Crash Dumps', path: path.join(localAppData, 'CrashDumps') },
+      { id: 'windowsTemp', label: 'Windows Temp', path: path.join(windowsDir, 'Temp') },
+      { id: 'prefetch', label: 'Prefetch', path: path.join(windowsDir, 'Prefetch') }
+    ];
+  }
+
+  return [
+    { id: 'caches', label: 'User Caches', path: '~/Library/Caches' },
+    { id: 'logs', label: 'User Logs', path: '~/Library/Logs' },
+    { id: 'crashReports', label: 'Crash Reports', path: '~/Library/Application Support/CrashReporter' },
+    { id: 'xcodeDerivedData', label: 'Xcode Derived Data', path: '~/Library/Developer/Xcode/DerivedData' }
+  ];
+};
 
 const SKIP_DIRS = new Set(['.git', 'node_modules', '.DS_Store', '.idea']);
 type TrashRecord = {
@@ -45,11 +59,8 @@ const resolveHomePath = (target: string) => {
 };
 
 const isSafeJunkPath = (targetPath: string) => {
-  const home = os.homedir();
   const resolved = path.resolve(targetPath);
-  const libraryRoot = path.join(home, 'Library');
-  if (!resolved.startsWith(libraryRoot)) return false;
-  return JUNK_DEFINITIONS.some((definition) => path.resolve(resolveHomePath(definition.path)) === resolved);
+  return getJunkDefinitions().some((definition) => path.resolve(resolveHomePath(definition.path)) === resolved);
 };
 
 const dirSizeAndCount = async (root: string): Promise<{ sizeBytes: number; fileCount: number }> => {
@@ -91,7 +102,7 @@ const getJunkSummary = async (): Promise<MacJunkSummary> => {
   const categories: MacJunkCategory[] = [];
   let totalBytes = 0;
 
-  for (const definition of JUNK_DEFINITIONS) {
+  for (const definition of getJunkDefinitions()) {
     const resolvedPath = resolveHomePath(definition.path);
     let exists = false;
     let sizeBytes = 0;
@@ -322,6 +333,56 @@ const scanLargeFiles = async (
 
 const listStartupItems = async (): Promise<StartupItemsResult> => {
   const items: StartupItem[] = [];
+  if (process.platform === 'win32') {
+    const startupDirs: Array<{ scope: StartupItem['scope']; root: string }> = [
+      {
+        scope: 'user',
+        root: path.join(
+          process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'),
+          'Microsoft',
+          'Windows',
+          'Start Menu',
+          'Programs',
+          'Startup'
+        )
+      },
+      {
+        scope: 'system',
+        root: path.join(
+          process.env.ProgramData || 'C:\\ProgramData',
+          'Microsoft',
+          'Windows',
+          'Start Menu',
+          'Programs',
+          'Startup'
+        )
+      }
+    ];
+
+    for (const { scope, root } of startupDirs) {
+      let entries;
+      try {
+        entries = await readdir(root, { withFileTypes: true });
+      } catch {
+        continue;
+      }
+
+      for (const entry of entries) {
+        if (!entry.isFile()) continue;
+        items.push({
+          name: entry.name.replace(/\.(lnk|url|cmd|bat|exe)$/i, ''),
+          path: path.join(root, entry.name),
+          scope
+        });
+      }
+    }
+
+    return {
+      scannedAt: new Date().toISOString(),
+      items
+    };
+  }
+
   const scopes: Array<{ scope: StartupItem['scope']; root: string }> = [
     { scope: 'user', root: path.join(os.homedir(), 'Library/LaunchAgents') },
     { scope: 'system', root: '/Library/LaunchAgents' }
@@ -376,6 +437,40 @@ const parsePsOutput = (output: string): MemoryProcess[] => {
 
 const listMemoryProcesses = async (): Promise<MemoryProcessResult> => {
   const exec = promisify(execCallback);
+  if (process.platform === 'win32') {
+    try {
+      const { stdout } = await exec(
+        'powershell -NoProfile -Command "Get-Process | Sort-Object WS -Descending | Select-Object -First 25 Id,ProcessName,CPU,WS,SI | ConvertTo-Json -Compress"'
+      );
+      const raw = stdout.trim();
+      if (!raw) {
+        return { sampledAt: new Date().toISOString(), processes: [] };
+      }
+      const parsed = JSON.parse(raw) as Record<string, unknown> | Array<Record<string, unknown>>;
+      const entries = Array.isArray(parsed) ? parsed : [parsed];
+      const totalMemKb = Math.max(1, Math.round(os.totalmem() / 1024));
+      return {
+        sampledAt: new Date().toISOString(),
+        processes: entries.map((entry) => {
+          const rssKb =
+            typeof entry.WS === 'number' && Number.isFinite(entry.WS)
+              ? Math.round(entry.WS / 1024)
+              : 0;
+          return {
+            pid: typeof entry.Id === 'number' ? entry.Id : 0,
+            user: 'current',
+            command: typeof entry.ProcessName === 'string' ? entry.ProcessName : 'unknown',
+            cpu: typeof entry.CPU === 'number' && Number.isFinite(entry.CPU) ? entry.CPU : 0,
+            mem: (rssKb / totalMemKb) * 100,
+            rssKb
+          };
+        })
+      };
+    } catch {
+      return { sampledAt: new Date().toISOString(), processes: [] };
+    }
+  }
+
   try {
     const { stdout } = await exec('ps -ax -o pid,user,command,pcpu,pmem,rss');
     const processes = parsePsOutput(stdout)
@@ -388,24 +483,22 @@ const listMemoryProcesses = async (): Promise<MemoryProcessResult> => {
 };
 
 const terminateProcess = async (pid: number): Promise<{ terminated: boolean; error?: string }> => {
-  if (process.platform !== 'darwin') {
-    return { terminated: false, error: 'Memory relief is available on macOS only.' };
-  }
-
   if (pid <= 1) {
     return { terminated: false, error: 'Refusing to terminate system process.' };
   }
 
-  const exec = promisify(execCallback);
-  try {
-    const { stdout } = await exec(`ps -o user= -p ${pid}`);
-    const owner = stdout.trim();
-    const current = os.userInfo().username;
-    if (!owner || owner !== current) {
-      return { terminated: false, error: 'Can only terminate processes owned by the current user.' };
+  if (process.platform === 'darwin') {
+    const exec = promisify(execCallback);
+    try {
+      const { stdout } = await exec(`ps -o user= -p ${pid}`);
+      const owner = stdout.trim();
+      const current = os.userInfo().username;
+      if (!owner || owner !== current) {
+        return { terminated: false, error: 'Can only terminate processes owned by the current user.' };
+      }
+    } catch (error) {
+      return { terminated: false, error: error instanceof Error ? error.message : 'Failed to inspect process' };
     }
-  } catch (error) {
-    return { terminated: false, error: error instanceof Error ? error.message : 'Failed to inspect process' };
   }
 
   try {

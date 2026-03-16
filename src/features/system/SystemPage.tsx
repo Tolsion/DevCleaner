@@ -28,6 +28,20 @@ const formatRate = (bytesPerSec: number) => {
   return `${formatBytes(bytesPerSec)}/s`;
 };
 
+const formatMbps = (bytesPerSec: number) => {
+  if (!bytesPerSec) return '0.00 Mbps';
+  return `${((bytesPerSec * 8) / (1024 * 1024)).toFixed(2)} Mbps`;
+};
+
+const getNetworkPeak = (info: SystemInfo) => {
+  return Math.max(info.networkInBytesPerSec, info.networkOutBytesPerSec, 1);
+};
+
+const formatPercent = (value: number | null) => {
+  if (value === null || !Number.isFinite(value)) return 'Unknown';
+  return `${value.toFixed(1)}%`;
+};
+
 const formatMinutes = (minutes: number | null) => {
   if (!minutes || minutes <= 0) return 'Unknown';
   const hours = Math.floor(minutes / 60);
@@ -58,15 +72,21 @@ const SystemSection = ({
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
-}) => (
-  <details
-    defaultOpen={defaultOpen}
-    className="rounded-2xl border border-slate-800 bg-[radial-gradient(circle_at_top,_rgba(30,64,175,0.18),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(16,185,129,0.12),_transparent_55%)] p-6"
-  >
-    <summary className="cursor-pointer text-sm uppercase tracking-[0.3em] text-muted">{title}</summary>
-    <div className="mt-4 grid gap-3 text-sm">{children}</div>
-  </details>
-);
+}) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  return (
+    <details
+      open={isOpen}
+      onToggle={(event) => {
+        setIsOpen((event.currentTarget as HTMLDetailsElement).open);
+      }}
+      className="rounded-2xl border border-slate-800 bg-[radial-gradient(circle_at_top,_rgba(30,64,175,0.18),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(16,185,129,0.12),_transparent_55%)] p-6"
+    >
+      <summary className="cursor-pointer text-sm uppercase tracking-[0.3em] text-muted">{title}</summary>
+      <div className="mt-4 grid gap-3 text-sm">{children}</div>
+    </details>
+  );
+};
 
 const Sparkline = ({
   points,
@@ -133,6 +153,7 @@ const renderNetwork = (info: SystemInfo) => {
 
 const SystemPage = () => {
   const { info, isLoading, error, fetchInfo } = useSystemStore();
+  const [selectedAdapter, setSelectedAdapter] = useState<string>('all');
   const [portQuery, setPortQuery] = useState('');
   const [portProtocol, setPortProtocol] = useState<'all' | 'TCP' | 'UDP'>('all');
   const [portSortKey, setPortSortKey] = useState<'port' | 'process' | 'pid' | 'protocol'>('port');
@@ -144,6 +165,7 @@ const SystemPage = () => {
   const [pageoutsSeries, setPageoutsSeries] = useState<number[]>([]);
   const [netInSeries, setNetInSeries] = useState<number[]>([]);
   const [netOutSeries, setNetOutSeries] = useState<number[]>([]);
+  const [gpuUsageSeries, setGpuUsageSeries] = useState<number[]>([]);
 
   useEffect(() => {
     void fetchInfo();
@@ -174,7 +196,28 @@ const SystemPage = () => {
     setPageoutsSeries((prev) => pushPoint(prev, info.pageouts));
     setNetInSeries((prev) => pushPoint(prev, info.networkInBytesPerSec));
     setNetOutSeries((prev) => pushPoint(prev, info.networkOutBytesPerSec));
+    setGpuUsageSeries((prev) => pushPoint(prev, info.gpu.utilizationPercent ?? 0));
   }, [info]);
+
+  useEffect(() => {
+    if (!info) return;
+    if (selectedAdapter === 'all') return;
+    const exists = info.networkAdapters.some((adapter) => adapter.name === selectedAdapter);
+    if (!exists) {
+      setSelectedAdapter('all');
+    }
+  }, [info, selectedAdapter]);
+
+  const activeAdapter = useMemo(() => {
+    if (!info) return null;
+    if (selectedAdapter === 'all') return null;
+    return info.networkAdapters.find((adapter) => adapter.name === selectedAdapter) ?? null;
+  }, [info, selectedAdapter]);
+
+  const displayedInboundRate = activeAdapter ? activeAdapter.inBytesPerSec : (info?.networkInBytesPerSec ?? 0);
+  const displayedOutboundRate = activeAdapter ? activeAdapter.outBytesPerSec : (info?.networkOutBytesPerSec ?? 0);
+  const displayedInboundTotal = activeAdapter ? activeAdapter.inBytesTotal : (info?.networkInBytesTotal ?? 0);
+  const displayedOutboundTotal = activeAdapter ? activeAdapter.outBytesTotal : (info?.networkOutBytesTotal ?? 0);
 
   const filteredPorts = useMemo(() => {
     if (!info) return [];
@@ -212,8 +255,8 @@ const SystemPage = () => {
       {isLoading && !info ? <LoadingOverlay label="Loading system data" /> : null}
       {isLoading && !info ? (
         <section className="rounded-2xl border border-slate-800 bg-surface/70 p-6">
-          <div className="grid gap-4 md:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={`system-skeleton-${index}`}
                 className="rounded-2xl border border-slate-800 bg-slate-950/40 p-5"
@@ -239,7 +282,7 @@ const SystemPage = () => {
 
       {info ? (
         <>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div className="rounded-2xl border border-slate-800 bg-surface/70 p-5">
               <p className="text-xs uppercase tracking-[0.3em] text-muted">Disk Usage</p>
               <p className="mt-3 text-3xl font-semibold">
@@ -339,6 +382,46 @@ const SystemPage = () => {
                 );
               })()}
             </div>
+            <div className="rounded-2xl border border-slate-800 bg-surface/70 p-5">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted">GPU</p>
+              <p className="mt-3 text-3xl font-semibold">
+                {info.gpu.utilizationPercent !== null ? `${info.gpu.utilizationPercent.toFixed(1)}%` : '—'}
+              </p>
+              <p className="mt-2 text-sm text-muted">
+                {info.gpu.model ?? 'GPU not detected'}
+              </p>
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                <div
+                  className="h-full rounded-full bg-sky-400"
+                  style={{ width: `${clampPercent(info.gpu.utilizationPercent ?? 0)}%` }}
+                />
+              </div>
+              <p className="mt-2 text-xs text-muted">
+                VRAM: {info.gpu.vramMb ? `${info.gpu.vramMb.toLocaleString()} MB` : 'Unknown'}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-800 bg-surface/70 p-5">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted">Network</p>
+              <p className="mt-3 text-3xl font-semibold">{formatRate(Math.max(displayedInboundRate, displayedOutboundRate, 1))}</p>
+              <p className="mt-2 text-sm text-muted">
+                Down {formatRate(displayedInboundRate)} · Up {formatRate(displayedOutboundRate)}
+              </p>
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                <div className="flex h-full w-full">
+                  <div
+                    className="h-full bg-sky-400"
+                    style={{ width: `${(displayedInboundRate / Math.max(displayedInboundRate, displayedOutboundRate, 1)) * 100}%` }}
+                  />
+                  <div
+                    className="h-full bg-fuchsia-400"
+                    style={{ width: `${(displayedOutboundRate / Math.max(displayedInboundRate, displayedOutboundRate, 1)) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-muted">
+                Total: {formatBytes(displayedInboundTotal + displayedOutboundTotal)}
+              </p>
+            </div>
           </div>
 
           <SystemSection title="Hardware" defaultOpen>
@@ -346,7 +429,45 @@ const SystemPage = () => {
             <SystemKeyValue label="Platform" value={`${info.platform} ${info.release}`} />
             <SystemKeyValue label="Architecture" value={info.arch} />
             <SystemKeyValue label="CPU" value={`${info.cpuModel} · ${info.cpuSpeedMHz} MHz`} />
+            <SystemKeyValue label="GPU" value={info.gpu.model ?? 'Unknown'} />
             <SystemKeyValue label="Uptime" value={formatUptime(info.uptimeSeconds)} />
+          </SystemSection>
+
+          <SystemSection title="GPU" defaultOpen={false}>
+            {info.gpu.available ? (
+              <>
+                <SystemKeyValue label="Model" value={info.gpu.model ?? 'Unknown'} />
+                <SystemKeyValue label="Vendor" value={info.gpu.vendor ?? 'Unknown'} />
+                <SystemKeyValue label="Renderer" value={info.gpu.renderer ?? 'Unknown'} />
+                <SystemKeyValue label="Driver" value={info.gpu.driverVersion ?? 'Unknown'} />
+                <SystemKeyValue
+                  label="VRAM"
+                  value={info.gpu.vramMb !== null ? `${info.gpu.vramMb.toLocaleString()} MB` : 'Unknown'}
+                />
+                <SystemKeyValue label="Utilization" value={formatPercent(info.gpu.utilizationPercent)} />
+                <SystemKeyValue label="Data Source" value={info.gpu.source ?? 'Unknown'} />
+                <div className="pt-2 text-xs">
+                  <p className="text-muted">GPU usage history</p>
+                  <Sparkline points={gpuUsageSeries} stroke="#38bdf8" />
+                </div>
+                <div className="space-y-3 pt-2 text-xs">
+                  {info.gpu.devices.map((device, index) => (
+                    <div key={`${device.name}-${index}`} className="rounded-xl border border-slate-800 bg-slate-950/40 p-3">
+                      <p className="text-xs uppercase tracking-[0.3em] text-muted">{device.name}</p>
+                      <p className="mt-2 text-slate-200">Vendor: {device.vendor ?? 'Unknown'}</p>
+                      <p className="mt-1 text-slate-200">
+                        VRAM: {device.vramMb !== null ? `${device.vramMb.toLocaleString()} MB` : 'Unknown'}
+                      </p>
+                      <p className="mt-1 text-slate-200">
+                        Active: {device.active === null ? 'Unknown' : device.active ? 'Yes' : 'No'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-muted">GPU data is not available on this system.</p>
+            )}
           </SystemSection>
 
           <SystemSection title="Storage" defaultOpen={false}>
@@ -395,10 +516,42 @@ const SystemPage = () => {
           </SystemSection>
 
           <SystemSection title="Network Activity" defaultOpen={false}>
-            <SystemKeyValue label="Inbound Rate" value={formatRate(info.networkInBytesPerSec)} />
-            <SystemKeyValue label="Outbound Rate" value={formatRate(info.networkOutBytesPerSec)} />
-            <SystemKeyValue label="Inbound Total" value={formatBytes(info.networkInBytesTotal)} />
-            <SystemKeyValue label="Outbound Total" value={formatBytes(info.networkOutBytesTotal)} />
+            <div className="flex flex-wrap items-center gap-2 pb-2">
+              <button
+                type="button"
+                onClick={() => setSelectedAdapter('all')}
+                className={`rounded-full border px-3 py-1 text-xs ${
+                  selectedAdapter === 'all'
+                    ? 'border-slate-700 bg-slate-900/60 text-slate-100'
+                    : 'border-slate-800 text-muted hover:border-slate-700'
+                }`}
+              >
+                All Adapters
+              </button>
+              {info.networkAdapters.map((adapter) => (
+                <button
+                  key={adapter.name}
+                  type="button"
+                  onClick={() => setSelectedAdapter(adapter.name)}
+                  className={`rounded-full border px-3 py-1 text-xs ${
+                    selectedAdapter === adapter.name
+                      ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
+                      : 'border-slate-800 text-muted hover:border-slate-700'
+                  }`}
+                >
+                  {adapter.displayName}
+                </button>
+              ))}
+            </div>
+            <SystemKeyValue label="Inbound Rate" value={formatRate(displayedInboundRate)} />
+            <SystemKeyValue label="Inbound Mbps" value={formatMbps(displayedInboundRate)} />
+            <SystemKeyValue label="Outbound Rate" value={formatRate(displayedOutboundRate)} />
+            <SystemKeyValue label="Outbound Mbps" value={formatMbps(displayedOutboundRate)} />
+            <SystemKeyValue label="Inbound Total" value={formatBytes(displayedInboundTotal)} />
+            <SystemKeyValue label="Outbound Total" value={formatBytes(displayedOutboundTotal)} />
+            {activeAdapter ? (
+              <SystemKeyValue label="Adapter Type" value={activeAdapter.type ?? 'Unknown'} />
+            ) : null}
             <div className="grid gap-3 pt-2 text-xs">
               <div>
                 <p className="text-muted">Inbound history</p>
@@ -408,6 +561,73 @@ const SystemPage = () => {
                 <p className="text-muted">Outbound history</p>
                 <Sparkline points={netOutSeries} stroke="#f472b6" />
               </div>
+            </div>
+            <div className="pt-2">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted">Adapters</p>
+              {info.networkAdapters.length === 0 ? (
+                <p className="mt-3 text-xs text-muted">No adapter counters available.</p>
+              ) : (
+                <div className="mt-3 overflow-hidden rounded-xl border border-slate-800">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-900/60 text-xs uppercase tracking-wide text-muted">
+                      <tr>
+                        <th className="px-3 py-2">Adapter</th>
+                        <th className="px-3 py-2">Down</th>
+                        <th className="px-3 py-2">Up</th>
+                        <th className="px-3 py-2">Down Mbps</th>
+                        <th className="px-3 py-2">Up Mbps</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {info.networkAdapters.map((adapter) => (
+                        <tr key={adapter.name}>
+                          <td className="px-3 py-2 text-slate-200">
+                            {adapter.displayName}
+                            <span className="ml-2 text-muted">{adapter.active ? 'active' : 'idle'}</span>
+                          </td>
+                          <td className="px-3 py-2">{formatRate(adapter.inBytesPerSec)}</td>
+                          <td className="px-3 py-2">{formatRate(adapter.outBytesPerSec)}</td>
+                          <td className="px-3 py-2">{formatMbps(adapter.inBytesPerSec)}</td>
+                          <td className="px-3 py-2">{formatMbps(adapter.outBytesPerSec)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            <div className="pt-2">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted">Network Active Processes</p>
+              {info.networkProcesses.length === 0 ? (
+                <p className="mt-3 text-xs text-muted">No process-level network activity available.</p>
+              ) : (
+                <div className="mt-3 overflow-hidden rounded-xl border border-slate-800">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-900/60 text-xs uppercase tracking-wide text-muted">
+                      <tr>
+                        <th className="px-3 py-2">Process</th>
+                        <th className="px-3 py-2">PID</th>
+                        <th className="px-3 py-2">Proto</th>
+                        <th className="px-3 py-2">Connections</th>
+                        <th className="px-3 py-2">Established</th>
+                        <th className="px-3 py-2">Listening</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {info.networkProcesses.map((process) => (
+                        <tr key={`${process.pid}-${process.protocol}-${process.process}`}>
+                          <td className="px-3 py-2 text-slate-200">{process.process}</td>
+                          <td className="px-3 py-2 text-muted">{process.pid}</td>
+                          <td className="px-3 py-2 text-muted">{process.protocol}</td>
+                          <td className="px-3 py-2">{process.connections}</td>
+                          <td className="px-3 py-2">{process.established}</td>
+                          <td className="px-3 py-2">{process.listening}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </SystemSection>
 

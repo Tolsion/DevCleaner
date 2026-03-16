@@ -5,6 +5,7 @@ import SplashScreen from "../components/SplashScreen";
 import Dashboard from "../features/dashboard/Dashboard";
 import CleanupPreviewPage from "../features/cleanup/CleanupPreviewPage";
 import DevToolsPage from "../features/dev-tools/DevToolsPage";
+import GeneralScanPage from "../features/general-scan/GeneralScanPage";
 import MacCleanerPage from "../features/mac-cleaner/MacCleanerPage";
 import ApplicationsPage from "../features/applications/ApplicationsPage";
 import SystemPage from "../features/system/SystemPage";
@@ -13,6 +14,7 @@ import TrayWidget from "../features/system/TrayWidget";
 import { useScanStore } from "../store/scanStore";
 import { useSystemStore } from "../store/systemStore";
 import { useToastStore } from "../store/toastStore";
+import { detectRendererOsFamily, getPlatformDisplayName } from "./platform";
 import appPackage from "../../package.json";
 
 const App = () => {
@@ -33,9 +35,12 @@ const App = () => {
   } = useScanStore();
   const { fetchInfo } = useSystemStore();
   const pushToast = useToastStore((state) => state.push);
+  const platform = detectRendererOsFamily();
+  const platformName = getPlatformDisplayName(platform);
   const navKey = "devcleaner:navigate";
   const pages: PageKey[] = [
     "dashboard",
+    "general-scan",
     "system",
     "cleanup",
     "settings",
@@ -178,6 +183,12 @@ const App = () => {
             </button>
           ),
         };
+      case "general-scan":
+        return {
+          eyebrow: "Scan Intelligence",
+          title: "General Scan",
+          subtitle: "Projects, applications, media files, large files, and stale data in one report.",
+        };
       case "cleanup":
         return {
           eyebrow: "Cleanup",
@@ -186,9 +197,12 @@ const App = () => {
         };
       case "mac-cleaner":
         return {
-          eyebrow: "Mac Cleaner",
+          eyebrow: "System Maintenance",
           title: "System Maintenance",
-          subtitle: "Home library cleanup, large files, and memory relief.",
+          subtitle:
+            platform === "windows"
+              ? "Temp folders, crash dumps, large files, and memory relief."
+              : "User cache cleanup, large files, and memory relief.",
         };
       case "settings":
         return {
@@ -206,7 +220,7 @@ const App = () => {
         return {
           eyebrow: "Applications",
           title: "Installed Apps",
-          subtitle: "Review and remove applications from this Mac.",
+          subtitle: `Review installed apps on ${platformName}.`,
         };
       default:
         return null;
@@ -229,6 +243,7 @@ const App = () => {
   return (
     <Layout activePage={activePage} onNavigate={setActivePage} header={header}>
       {activePage === "dashboard" && <Dashboard />}
+      {activePage === "general-scan" && <GeneralScanPage />}
       {activePage === "system" && <SystemPage />}
       {activePage === "mac-cleaner" && <MacCleanerPage />}
       {activePage === "cleanup" && <CleanupPreviewPage />}

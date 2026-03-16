@@ -7,6 +7,8 @@ export type AppInfo = {
   version: string | null;
   publisher: string | null;
   iconDataUrl: string | null;
+  uninstallSupported: boolean;
+  uninstallHint: string | null;
 };
 
 export type AppsListResponse = {

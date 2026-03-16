@@ -3,6 +3,7 @@ import { FolderOpen, RefreshCw, Trash2, Zap } from 'lucide-react';
 import { useMacCleanerStore } from '../../store/macCleanerStore';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import type { MacJunkCategory } from '../../../electron/shared/types/mac-cleaner';
+import { detectRendererOsFamily, getPlatformDisplayName, getTrashLabel } from '../../app/platform';
 
 const formatBytes = (bytes: number) => {
   if (!bytes) return '0 B';
@@ -86,6 +87,9 @@ const MacCleanerPage = () => {
     terminateProcess
   } = useMacCleanerStore();
 
+  const platform = detectRendererOsFamily();
+  const platformName = getPlatformDisplayName(platform);
+  const trashLabel = getTrashLabel(platform);
   const [selectedJunk, setSelectedJunk] = useState<Record<string, boolean>>({});
   const [largeFileRoots, setLargeFileRoots] = useState<string[]>(["~/"]);
   const [minSizeMb, setMinSizeMb] = useState(500);
@@ -181,7 +185,7 @@ const MacCleanerPage = () => {
         <section className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4 text-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-slate-100">
-              {lastTrashCount} item(s) moved to Trash.
+              {lastTrashCount} item(s) moved to {trashLabel}.
             </p>
             <button
               type="button"
@@ -189,7 +193,7 @@ const MacCleanerPage = () => {
               disabled={isLoading}
               className="flex items-center gap-2 rounded-xl border border-slate-800 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:bg-slate-900/60"
             >
-              Undo last Trash
+              Undo last {trashLabel}
             </button>
           </div>
         </section>
@@ -205,9 +209,13 @@ const MacCleanerPage = () => {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-muted">System Junk</p>
-            <h3 className="mt-2 text-lg font-semibold">Clean user-level cache and logs</h3>
+            <h3 className="mt-2 text-lg font-semibold">
+              {platform === 'windows' ? 'Clean temp files and crash data' : 'Clean user-level cache and logs'}
+            </h3>
             <p className="mt-1 text-xs text-muted">
-              Targets only folders under <span className="font-mono">~/Library</span> (no system-wide deletion).
+              {platform === 'windows'
+                ? `Targets safe cleanup locations on ${platformName}.`
+                : 'Targets only folders under ~/Library (no system-wide deletion).'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -238,7 +246,7 @@ const MacCleanerPage = () => {
         {junkCleanResults.length > 0 ? (
           <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-muted">
             Last clean results: {junkCleanResults.filter((item) => item.deleted).length} of{' '}
-            {junkCleanResults.length} items moved to Trash.
+            {junkCleanResults.length} items moved to {trashLabel}.
           </div>
         ) : null}
       </section>
@@ -317,7 +325,7 @@ const MacCleanerPage = () => {
               className="flex items-center gap-2 rounded-xl border border-slate-800 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:bg-slate-900/60 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <Trash2 size={14} />
-              Move to Trash
+              Move to {trashLabel}
             </button>
           </div>
         </div>
@@ -363,7 +371,7 @@ const MacCleanerPage = () => {
         {largeFileDeletes.length > 0 ? (
           <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-muted">
             Last delete results: {largeFileDeletes.filter((item) => item.deleted).length} of{' '}
-            {largeFileDeletes.length} moved to Trash.
+            {largeFileDeletes.length} moved to {trashLabel}.
           </div>
         ) : null}
       </section>
@@ -372,7 +380,9 @@ const MacCleanerPage = () => {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-muted">Startup Items</p>
-            <h3 className="mt-2 text-lg font-semibold">Launch agents (read-only)</h3>
+            <h3 className="mt-2 text-lg font-semibold">
+              {platform === 'windows' ? 'Startup entries (read-only)' : 'Launch agents (read-only)'}
+            </h3>
             <p className="mt-1 text-xs text-muted">User and system scopes listed, removal not enabled.</p>
           </div>
           <button

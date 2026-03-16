@@ -32,10 +32,11 @@ const normalizeVersion = (output: string) => {
 
 export const getDevToolsInfo = async (): Promise<DevToolInfo[]> => {
   const results: DevToolInfo[] = [];
+  const shell = process.platform === 'win32' ? undefined : process.env.SHELL;
 
   for (const tool of TOOL_COMMANDS) {
     try {
-      const { stdout, stderr } = await exec(tool.command, { shell: '/bin/zsh' });
+      const { stdout, stderr } = await exec(tool.command, shell ? { shell } : undefined);
       const raw = stdout || stderr || '';
       results.push({
         id: tool.id,

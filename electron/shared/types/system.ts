@@ -23,6 +23,25 @@ export interface SystemInfo {
   networkOutBytesPerSec: number;
   networkInBytesTotal: number;
   networkOutBytesTotal: number;
+  networkAdapters: Array<{
+    name: string;
+    displayName: string;
+    inBytesPerSec: number;
+    outBytesPerSec: number;
+    inBytesTotal: number;
+    outBytesTotal: number;
+    active: boolean;
+    type: string | null;
+  }>;
+  networkProcesses: Array<{
+    pid: number;
+    process: string;
+    protocol: string;
+    connections: number;
+    listening: number;
+    established: number;
+    bandwidthBytesPerSec: number | null;
+  }>;
   wifi: {
     ssid: string | null;
     rssi: number | null;
@@ -72,6 +91,22 @@ export interface SystemInfo {
     externalConnected: boolean | null;
     avgTimeToEmptyMinutes: number | null;
     avgTimeToFullMinutes: number | null;
+  };
+  gpu: {
+    available: boolean;
+    model: string | null;
+    vendor: string | null;
+    renderer: string | null;
+    driverVersion: string | null;
+    vramMb: number | null;
+    utilizationPercent: number | null;
+    source: string | null;
+    devices: Array<{
+      name: string;
+      vendor: string | null;
+      vramMb: number | null;
+      active: boolean | null;
+    }>;
   };
   powerSavingEnabled: boolean | null;
   wifiAvailable: boolean;

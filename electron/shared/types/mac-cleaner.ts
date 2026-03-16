@@ -1,4 +1,11 @@
-export type MacJunkCategoryId = 'caches' | 'logs' | 'crashReports' | 'xcodeDerivedData';
+export type MacJunkCategoryId =
+  | 'caches'
+  | 'logs'
+  | 'crashReports'
+  | 'xcodeDerivedData'
+  | 'temp'
+  | 'windowsTemp'
+  | 'prefetch';
 
 export interface MacJunkCategory {
   id: MacJunkCategoryId;

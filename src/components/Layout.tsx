@@ -7,6 +7,7 @@ import ToastStack from "./ToastStack";
 
 type PageKey =
   | "dashboard"
+  | "general-scan"
   | "system"
   | "cleanup"
   | "settings"

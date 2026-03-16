@@ -8,7 +8,20 @@ import { storageService } from '../services/storage.service';
 
 let lastResults: ScanResults = {
   scannedAt: null,
-  items: []
+  items: [],
+  generalAnalysis: {
+    scannedFileCount: 0,
+    scannedDirectoryCount: 0,
+    totalScannedBytes: 0,
+    totalMediaBytes: 0,
+    staleThresholdDays: 180,
+    largeFileThresholdBytes: 250 * 1024 * 1024,
+    largeFiles: [],
+    oldestFiles: [],
+    staleFiles: [],
+    mediaSummary: [],
+    applications: []
+  }
 };
 
 let currentAbort: { aborted: boolean } | null = null;

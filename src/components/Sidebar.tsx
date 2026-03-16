@@ -1,5 +1,6 @@
 import {
   AppWindow,
+  Binary,
   LayoutDashboard,
   Monitor,
   Settings,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 import type { PageKey } from "./Layout";
 import logoColor from "../assets/dev_clean_color.png";
+import { detectRendererOsFamily } from "../app/platform";
 
 interface SidebarProps {
   activePage: PageKey;
@@ -16,6 +18,9 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ activePage, onNavigate }: SidebarProps) => {
+  const platform = detectRendererOsFamily();
+  const maintenanceLabel = platform === "macos" ? "Mac Cleaner" : "System Cleaner";
+
   return (
     <aside
       className="fixed left-0 top-0 flex h-screen w-64 flex-col gap-2 border-r border-slate-800 bg-slate-950/70 p-6"
@@ -51,6 +56,20 @@ const Sidebar = ({ activePage, onNavigate }: SidebarProps) => {
         </button>
         <button
           type="button"
+          onClick={() => onNavigate("general-scan")}
+          className={`rounded-lg border px-3 py-2 text-left font-medium ${
+            activePage === "general-scan"
+              ? "border-slate-800 bg-slate-900/60 text-slate-100"
+              : "border-transparent text-muted hover:border-slate-800 hover:bg-slate-900/40"
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <Binary size={16} />
+            General Scan
+          </span>
+        </button>
+        <button
+          type="button"
           onClick={() => onNavigate("system")}
           className={`rounded-lg border px-3 py-2 text-left font-medium ${
             activePage === "system"
@@ -74,7 +93,7 @@ const Sidebar = ({ activePage, onNavigate }: SidebarProps) => {
         >
           <span className="flex items-center gap-2">
             <Sparkles size={16} />
-            Mac Cleaner
+            {maintenanceLabel}
           </span>
         </button>
         <button

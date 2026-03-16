@@ -24,10 +24,11 @@ const createTrayWindow = () => {
     show: false,
     frame: false,
     resizable: true,
-    transparent: false,
+    transparent: true,
     alwaysOnTop: true,
     skipTaskbar: true,
-    backgroundColor: "#0b1430",
+    backgroundColor: "#00000000",
+    vibrancy: "under-window",
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

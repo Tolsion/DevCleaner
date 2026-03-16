@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const MacJunkCleanSchema = z.object({
-  ids: z.array(z.enum(['caches', 'logs', 'crashReports', 'xcodeDerivedData'])).min(1)
+  ids: z.array(z.enum(['caches', 'logs', 'crashReports', 'xcodeDerivedData', 'temp', 'windowsTemp', 'prefetch'])).min(1)
 });
 
 export const LargeFileScanSchema = z.object({
